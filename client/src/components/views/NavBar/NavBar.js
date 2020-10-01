@@ -38,7 +38,7 @@ function NavBar() {
           <Icon type="align-right" />
         </Button>
         <Drawer
-          title="Basic Drawer"
+          title="Main Menu"
           placement="right"
           className="menu_drawer"
           closable={false}

@@ -1,108 +1,141 @@
 import React, { useEffect, useState } from "react";
-import { API_URL, API_KEY, IMAGE_URL } from "../../Config";
-import MainImage from "../LandingPage/Sections/MainImage";
-import { Descriptions, Button, Row } from "antd";
-import GridCard from "../LandingPage/Sections/GridCard";
-import Favorite from "./Sections/Favorite";
+import { List, Avatar, Row, Col, Button } from "antd";
+import axios from "axios";
+
 import Comment from "./Sections/Comment";
+import LikeDislikes from "./Sections/LikeDislikes";
+import { API_URL, API_KEY, IMAGE_URL, IMAGE_SIZE } from "../../Config";
+import GridCards from "../LandingPage/Sections/GridCard";
+import MainImage from "../../views/LandingPage/Sections/MainImage";
+import MovieInfo from "./Sections/MovieInfo";
+import Favorite from "./Sections/Favorite";
 
 function MovieDetailPage(props) {
   const movieId = props.match.params.movieId;
   const [Movie, setMovie] = useState([]);
-  const [Crews, setCrews] = useState([]);
+  const [Casts, setCasts] = useState([]);
+  const [CommentLists, setCommentLists] = useState([]);
+  const [LoadingForMovie, setLoadingForMovie] = useState(true);
+  const [LoadingForCasts, setLoadingForCasts] = useState(true);
   const [ActorToggle, setActorToggle] = useState(false);
-  useEffect(() => {
-    fetch(`${API_URL}movie/${movieId}?api_key=${API_KEY}&language=en-US`)
-      .then((response) => response.json())
-      .then((response) => {
-        setMovie(response);
+  const movieVariable = {
+    movieId: movieId,
+  };
 
-        fetch(`${API_URL}movie/${movieId}/credits?api_key=${API_KEY}`)
-          .then((response) => response.json())
-          .then((response) => {
-            console.log(response);
-            setCrews(response.cast);
-          });
-      });
+  useEffect(() => {
+    let endpointForMovieInfo = `${API_URL}movie/${movieId}?api_key=${API_KEY}&language=en-US`;
+    fetchDetailInfo(endpointForMovieInfo);
+
+    axios.post("/api/comment/getComments", movieVariable).then((response) => {
+      console.log(response);
+      if (response.data.success) {
+        console.log("response.data.comments", response.data.comments);
+        setCommentLists(response.data.comments);
+      } else {
+        alert("Failed to get comments Info");
+      }
+    });
   }, []);
 
-  const handleClick = () => {
+  const toggleActorView = () => {
     setActorToggle(!ActorToggle);
+  };
+
+  const fetchDetailInfo = (endpoint) => {
+    fetch(endpoint)
+      .then((result) => result.json())
+      .then((result) => {
+        console.log(result);
+        setMovie(result);
+        setLoadingForMovie(false);
+
+        let endpointForCasts = `${API_URL}movie/${movieId}/credits?api_key=${API_KEY}`;
+        fetch(endpointForCasts)
+          .then((result) => result.json())
+          .then((result) => {
+            console.log(result);
+            setCasts(result.cast);
+          });
+
+        setLoadingForCasts(false);
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const updateComment = (newComment) => {
+    setCommentLists(CommentLists.concat(newComment));
   };
 
   return (
     <div>
-      {/* Main Image */}
-      {Movie && (
+      {/* Header */}
+      {!LoadingForMovie ? (
         <MainImage
-          image={`${IMAGE_URL}w1280${
-            Movie.backdrop_path && Movie.backdrop_path
-          }`}
+          image={`${IMAGE_URL}${IMAGE_SIZE}${Movie.backdrop_path}`}
           title={Movie.original_title}
           text={Movie.overview}
         />
+      ) : (
+        <div>loading...</div>
       )}
 
       {/* Body */}
-
       <div style={{ width: "85%", margin: "1rem auto" }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Favorite
-            userFrom={localStorage.getItem("userId")}
-            movieId={movieId}
             movieInfo={Movie}
+            movieId={movieId}
+            userFrom={localStorage.getItem("userId")}
           />
         </div>
 
-        {/* Movie Info Table */}
-        <Descriptions title="Movie Info" bordered>
-          <Descriptions.Item label="Title">
-            {Movie.original_title}
-          </Descriptions.Item>
-          <Descriptions.Item label="release_date">
-            {Movie.release_date}
-          </Descriptions.Item>
-          <Descriptions.Item label="revenue">{Movie.revenue}</Descriptions.Item>
-          <Descriptions.Item label="runtime">{Movie.runtime}</Descriptions.Item>
-          <Descriptions.Item label="vote_average" span={2}>
-            {Movie.vote_average}
-          </Descriptions.Item>
-          <Descriptions.Item label="vote_count">
-            {Movie.vote_count}
-          </Descriptions.Item>
-          <Descriptions.Item label="status">{Movie.status}</Descriptions.Item>
-          <Descriptions.Item label="popularity">
-            {Movie.popularity}
-          </Descriptions.Item>
-        </Descriptions>
+        {/* Movie Info */}
+        {!LoadingForMovie ? <MovieInfo movie={Movie} /> : <div>loading...</div>}
 
         <br />
-        <br />
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <Button onClick={handleClick}> Toggle Actor View</Button>
+        {/* Actors Grid*/}
+
+        <div
+          style={{ display: "flex", justifyContent: "center", margin: "2rem" }}
+        >
+          <Button onClick={toggleActorView}>Toggle Actor View </Button>
         </div>
-
-        {/* Grid Cars for Crews */}
 
         {ActorToggle && (
           <Row gutter={[16, 16]}>
-            {Crews &&
-              Crews.map((crew, index) => (
-                <React.Fragment key={index}>
-                  {crew.profile_path && (
-                    <GridCard
+            {!LoadingForCasts ? (
+              Casts.map(
+                (cast, index) =>
+                  cast.profile_path && (
+                    <GridCards
                       actor
-                      image={`${IMAGE_URL}w500${crew.profile_path}`}
+                      image={cast.profile_path}
+                      characterName={cast.characterName}
                     />
-                  )}
-                </React.Fragment>
-              ))}
+                  )
+              )
+            ) : (
+              <div>loading...</div>
+            )}
           </Row>
         )}
+        <br />
 
-        {/* Comment Section */}
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <LikeDislikes
+            video
+            videoId={movieId}
+            userId={localStorage.getItem("userId")}
+          />
+        </div>
 
-        <Comment />
+        {/* Comments */}
+        <Comment
+          movieTitle={Movie.original_title}
+          CommentLists={CommentLists}
+          postId={movieId}
+          refreshFunction={updateComment}
+        />
       </div>
     </div>
   );
