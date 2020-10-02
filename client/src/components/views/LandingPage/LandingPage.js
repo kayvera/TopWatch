@@ -67,7 +67,12 @@ function LandingPage() {
 
         {/* Load More Button  */}
         <br />
-        <div style={{ display: "flex", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
           <button onClick={handleClick}> Load More </button>
         </div>
       </div>
