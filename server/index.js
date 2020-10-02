@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const config = require("./config/key");
+const path = require("path");
 
 const mongoose = require("mongoose");
 const connect = mongoose
