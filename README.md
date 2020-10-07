@@ -10,7 +10,7 @@ You can also fetch useful movie and actor information straight from the api. If 
 5. Ability to toggle actors 
 6. Favorite page gives movie preview when you hover over the title
 
-### TopWatch UI Gallary
+### TopWatch UI Gallery
 #### Homepage Tab
 ![Homepage Tab](https://i.postimg.cc/vBRv5SqZ/screencapture-top-watch-movie-herokuapp-2020-10-07-13-27-04.png)
 
